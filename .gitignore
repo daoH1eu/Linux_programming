@@ -1,0 +1,9 @@
+# Ignore all object files
+*.o
+
+# Ignore all executable files
+*.exe
+*.elf
+*
+!*.*
+!*/

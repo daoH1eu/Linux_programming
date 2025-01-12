@@ -14,24 +14,24 @@
 int TCP_create_socket();
 
 // Bind a socket with port
-int TCP_bind_socket(int sockfd, int port);
+int TCP_bind_socket(int sock_fd, int port);
 
 // Listen for connection on socket fd
-int TCP_listen_for_connection(int sockfd);
+int TCP_listen_for_connection(int sock_fd);
 
 // Accept the connect and return connection file desciption
-int TCP_accept_connection(int sockfd, int *port, char *client_ip);
+int TCP_accept_connection(int sock_fd, int *port, char *client_ip);
 
 // Connect to sever by ip and port
-int TCP_connect(int sockfd, const char *ip, int port);
+int TCP_connect(int sock_fd, const char *ip, int port);
 
 // Send message
-void TCP_send_message(int sockfd, const char *message);
+int TCP_send_message(int sock_fd, const char *message);
 
 // Receive message
-int TCP_receive_message(int sockfd, char *buffer, uint32_t size);
+int TCP_receive_message(int sock_fd, char *buffer, uint32_t size);
 
 // Close connect
-void TCP_close_connection(int sockfd);
+int TCP_close_connection(int sock_fd);
 
 #endif

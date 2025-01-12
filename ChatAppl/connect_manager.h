@@ -37,7 +37,7 @@ static void add_client(connect_manager_t client);
 
 // Remove connection from list and free memory
 void remove_client(uint32_t client_id);
-void remove_all_client(void);
+void remove_all_clients(void);
 
 // Display the list of active connections
 void list_all_connections(void);

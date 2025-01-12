@@ -4,27 +4,46 @@ static uint32_t id_counter = 1;
 
 int create_server_socket(int port) {
     int sock_fd = TCP_create_socket();
-    TCP_bind_socket(sock_fd, port);
-    
-    if (TCP_listen_for_connection(sock_fd) >= 0) {
-        printf("Listening on port: %d\n", port);
+
+    if (sock_fd < 0) {
+        perror("Failed to create socket");
+        return -1;
     }
 
+    if (TCP_bind_socket(sock_fd, port) < 0) {
+        perror("Failed to bind socket");
+        return -1;
+    }
+
+    if (TCP_listen_for_connection(sock_fd) < 0) {
+        perror("Failed to listen");
+        return -1;
+    }
+
+    printf("Listening on port: %d\n", port);
+   
     return sock_fd;
 }
 
 int create_client_socket(const char *ip, int port) {
     int sock_fd = TCP_create_socket();
 
-    if (TCP_connect(sock_fd, ip, port) >= 0) {
-        connect_manager_t client;
-        client.client_id = id_counter++;
-        client.in_addr = strdup(ip);
-        client.in_port = port;
-        client.sock_fd = sock_fd;
-
-        add_client(client);
+    if (sock_fd < 0) {
+        perror("Failed to create socket");
+        return -1;
     }
+
+    if (TCP_connect(sock_fd, ip, port) < 0) {
+        perror("Connection failed");
+        return -1;
+    }
+
+    connect_manager_t client;
+    client.client_id = id_counter++;
+    client.in_addr = strdup(ip);
+    client.in_port = port;
+    client.sock_fd = sock_fd;
+    add_client(client);
 
     return sock_fd;
 }
@@ -35,31 +54,35 @@ void accept_new_connection(int listen_fd) {
 
     int client_fd = TCP_accept_connection(listen_fd, &client_port, client_ip);
 
-    if (client_fd >= 0) {
-        printf("\nNew connection detected\n");
-    
-        connect_manager_t client;
-        client.client_id = id_counter++;
-        client.in_addr = client_ip;
-        client.in_port = client_port;
-        client.sock_fd = client_fd;
-
-        add_client(client);
+    if (client_fd < 0) {
+        perror("Failed to accept connection");
+        return;
     }
+
+    connect_manager_t client;
+    client.client_id = id_counter++;
+    client.in_addr = client_ip;
+    client.in_port = client_port;
+    client.sock_fd = client_fd;
+    add_client(client);
 }
 
 void client_handler(void) {
+    // Handle client messages
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if(clients_p[i] != NULL && clients_p[i]->sock_fd > 0) {
             char buffer[BUFFER_SIZE];
             int bytes_received = TCP_receive_message(clients_p[i]->sock_fd, buffer, BUFFER_SIZE);
- 
-            // Handle client messages
-            printf("\n");
-            if (bytes_received <= 0) {
+
+            if(bytes_received < 0) {
+                perror("Failed to receive message");
+                return;
+            } else if (bytes_received == 0) {
+                printf("\n");
                 printf("Connection closed %s on port: %d\n", clients_p[i]->in_addr, clients_p[i]->in_port);
                 remove_client(clients_p[i]->client_id);
             } else {
+                printf("\n");
                 printf("Message received from: %s\n", clients_p[i]->in_addr);
                 printf("Port %d\n", clients_p[i]->in_port);
                 printf("Received message: %s\n", buffer);
@@ -71,7 +94,10 @@ void client_handler(void) {
 void send_to_client(char *message, uint32_t client_id) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL && clients_p[i]->client_id == client_id) {
-            TCP_send_message(clients_p[i]->sock_fd, message);
+            if(TCP_send_message(clients_p[i]->sock_fd, message) < 0) {
+                perror("Failed to send message");
+                return;
+            }
         }
     }
 }
@@ -92,32 +118,42 @@ static void add_client(connect_manager_t new_client) {
         }
     }
 
-    printf("\n");
     if (!add_flag) {
-        printf("Connection list is full! Cannot add more connections.\n");
+        printf("\nConnection list is full! Cannot add more connections.\n");
     } else {
-        printf("New client connected: %s:%d\n", new_client.in_addr, new_client.in_port);
+        printf("\nConnection established: ID: %d | IP: %s | Port: %d\n", new_client.client_id, new_client.in_addr, new_client.in_port);
     }
-    printf("\n");
 }
 
 void remove_client(uint32_t client_id) {
+    uint8_t id_found = 0;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL && clients_p[i]->client_id == client_id) {
-            TCP_close_connection(clients_p[i]->sock_fd);
-            printf("\nFree conection %s on port: %d\n", clients_p[i]->in_addr, clients_p[i]->in_port);
+            if (TCP_close_connection(clients_p[i]->sock_fd) < 0) {
+                perror("Failed to close connection");
+                return;
+            }
+
+            printf("\nFree conection: ID:  %d | IP: %s | Port: %d\n", clients_p[i]->client_id ,clients_p[i]->in_addr, clients_p[i]->in_port);
             free(clients_p[i]);
             clients_p[i] = NULL;
+            id_found = 1;
             break;
-        }
+        } 
     }
+    if (!id_found)
+        printf("Connection with ID: %d not exist\n", client_id);
 }
 
-void remove_all_client(void) {
+void remove_all_clients(void) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL) {
-            TCP_close_connection(clients_p[i]->sock_fd);
-            printf("\nFree conection %s on port: %d\n", clients_p[i]->in_addr, clients_p[i]->in_port);
+            if (TCP_close_connection(clients_p[i]->sock_fd) < 0) {
+                perror("Failed to close connection");
+                return;
+            }
+
+            printf("\nFree conection: ID: %d | IP: %s | Port: %d\n", clients_p[i]->client_id ,clients_p[i]->in_addr, clients_p[i]->in_port);
             free(clients_p[i]);
             clients_p[i] = NULL;
             break;
@@ -126,11 +162,15 @@ void remove_all_client(void) {
 }
 
 void list_all_connections(void) {
+    uint8_t is_empty = 1;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL) {
             printf("Connect ID: %d | IP: %s | Port: %d\n", clients_p[i]->client_id, clients_p[i]->in_addr, clients_p[i]->in_port);
+            is_empty = 0;
         }
     }
+    if (is_empty)
+        printf("\nNo active connections, list empty!\n");;
 }
 
 void getMyIp(int sock_fd){

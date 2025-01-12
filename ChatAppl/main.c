@@ -15,6 +15,7 @@ void display_menu() {
     printf("6. terminate <connection id>            : Terminate a specific connection\n");
     printf("7. send <connection id> <message>       : Send a message to a specific connection\n");
     printf("8. exit                                 : Exit the application\n");
+    printf("\nEnter a command\n");
 }
 
 void *accept_connection_thread(void *arg) {
@@ -49,7 +50,6 @@ int main(int argc, char *argv[]) {
     display_menu();
 
     while (1) {
-        printf("\nEnter a command: ");
         if (fgets(input, sizeof(input), stdin) == NULL) {
             printf("Error reading input. Please try again.\n");
             continue;
@@ -97,7 +97,8 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(command, "exit") == 0) {
             // handle_exit();
-            remove_all_client();
+            remove_all_clients();
+            close(server_fd);
             exit(0);
         } else {
             printf("Invalid command. Type 'help' for a list of commands.\n");

@@ -89,7 +89,11 @@ int TCP_connect(int sock_fd, const char *ip, int port) {
 
 int TCP_send_message(int sock_fd, const char *message) {
     int ret_val = 0;
-    if (send(sock_fd, message, strlen(message), 0) < 0) {
+    if (strlen(message) >= BUFFER_SIZE) {
+        // Message size too large
+        ret_val = -2;
+    }
+    else (send(sock_fd, message, strlen(message), 0) < 0) {
         // perror("Failed to send message");
         ret_val = -1;
     }

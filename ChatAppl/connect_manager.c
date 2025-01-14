@@ -94,10 +94,15 @@ void client_handler(void) {
 void send_to_client(char *message, uint32_t client_id) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL && clients_p[i]->client_id == client_id) {
-            if(TCP_send_message(clients_p[i]->sock_fd, message) < 0) {
+            int send_stat = TCP_send_message(clients_p[i]->sock_fd, message);
+            if(send_stat == -1) {
                 perror("Failed to send message");
                 return;
+            } else if (send_stat == -2) {
+                perror("Message size too large");
+                return;
             }
+            
         }
     }
 }
@@ -130,7 +135,7 @@ void remove_client(uint32_t client_id) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL && clients_p[i]->client_id == client_id) {
             if (TCP_close_connection(clients_p[i]->sock_fd) < 0) {
-                perror("Failed to close connection");
+                printf("Failed to close connection with ID: %d", clients_p[i]->client_id);
                 return;
             }
 
@@ -149,14 +154,13 @@ void remove_all_clients(void) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients_p[i] != NULL) {
             if (TCP_close_connection(clients_p[i]->sock_fd) < 0) {
-                perror("Failed to close connection");
-                return;
+                printf("Failed to close connection with ID: %d", clients_p[i]->client_id);
+                continue;
             }
 
             printf("\nFree conection: ID: %d | IP: %s | Port: %d\n", clients_p[i]->client_id ,clients_p[i]->in_addr, clients_p[i]->in_port);
             free(clients_p[i]);
             clients_p[i] = NULL;
-            break;
         }
     }
 }

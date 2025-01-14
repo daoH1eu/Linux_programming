@@ -22,7 +22,7 @@ int TCP_listen_for_connection(int sock_fd);
 // Accept the connect and return connection file desciption
 int TCP_accept_connection(int sock_fd, int *port, char *client_ip);
 
-// Connect to sever by ip and port
+// Connect to server by ip and port
 int TCP_connect(int sock_fd, const char *ip, int port);
 
 // Send message

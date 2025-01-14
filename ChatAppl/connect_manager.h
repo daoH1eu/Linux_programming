@@ -1,5 +1,4 @@
 #include "TCP_socket.h"
-#include "string.h"
 
 #ifndef CONN_MANAGE_H
 #define CONN_MANAGE_H

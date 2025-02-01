@@ -15,9 +15,6 @@ typedef struct connect_manager
     char *in_addr;
 } connect_manager_t;
 
-// Client list
-static connect_manager_t *clients_p[MAX_CLIENTS] = {NULL};
-
 // Bind running program as server
 int create_server_socket(int port);
 
@@ -25,7 +22,7 @@ int create_server_socket(int port);
 int create_client_socket(const char *ip, int port);
 
 // Handle new client connection
-void accept_new_connection(int listen_fd);
+void accept_new_connection(void);
 
 // Handle client communication
 void client_handler(void);
@@ -44,6 +41,6 @@ void remove_all_clients(void);
 void list_all_connections(void);
 
 // Get the IP and port of the local socket.
-void getMyIp(int sock_fd);
+void get_my_ip(void);
 
 #endif

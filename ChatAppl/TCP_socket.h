@@ -7,8 +7,8 @@
 #ifndef TCP_SOCKET_H
 #define TCP_SOCKET_H
 
-#define SERVER_IP       "127.0.0.1"
-#define BUFFER_SIZE     1024
+#define SERVER_IP "127.0.0.1"
+#define BUFFER_SIZE 1024
 
 // Create and return socket file desciption
 int TCP_create_socket();

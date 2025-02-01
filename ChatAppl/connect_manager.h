@@ -1,20 +1,22 @@
 #include "TCP_socket.h"
+#include <sys/select.h>
 
 #ifndef CONN_MANAGE_H
 #define CONN_MANAGE_H
 
-#define MAX_CLIENTS     10
+#define MAX_CLIENTS 10
 
 // Structure to store a connection info
-typedef struct connect_manager {
+typedef struct connect_manager
+{
     uint32_t client_id;
     int sock_fd;
     uint32_t in_port;
-    char * in_addr;
+    char *in_addr;
 } connect_manager_t;
 
 // Client list
-static connect_manager_t *clients_p[MAX_CLIENTS] = { NULL };
+static connect_manager_t *clients_p[MAX_CLIENTS] = {NULL};
 
 // Bind running program as server
 int create_server_socket(int port);
